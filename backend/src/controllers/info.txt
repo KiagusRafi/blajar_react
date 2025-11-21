@@ -1,0 +1,2 @@
+folder ini isinya fungsi-fungsi untuk endpoint.
+dipisah karena mungkin beberapa kode fungsional endpoint bakal panjang.
