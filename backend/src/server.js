@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import path from "path";
 
 import notesRoutes from "./routes/notesRoutes.js";
 import { connectDB } from "./config/db.js";
@@ -14,17 +15,20 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5001; //kalo kiri undefined, kanan dipake. nama tekniknya fallback value.
+const __dirname = path.resolve() // bakal ngasih "source for the backend"
 
 // connectDB();
 // dipindahin. kalo dibiarin, servernya jalan duluan sebelum koneksi database.
 // jadinya disatuin dengan app.listen dibawah, make method .then()
 
 // middleware : fungsi yang berjalan di antara proses req dan res.
-app.use(
-    cors({
-        origin: "http://localhost:5173",
-    })
-);
+if (process.env.NODE_ENV !== "production"){
+    app.use(
+        cors({
+            origin: "http://localhost:5173",
+        })
+    );
+}
 app.use(express.json()); // this middleware will parse JSON bodies: req.body
 app.use(rateLimiter);
 // app.use((req, res, next) => {
@@ -33,6 +37,18 @@ app.use(rateLimiter);
 // });
 
 app.use("/api/notes", notesRoutes);
+
+// kalo di sisi production :
+if (process.env.NODE_ENV === "production") {
+    //deploy
+    app.use(express.static(path.join(__dirname,"../frontend/dist")))
+    // artinya : naik ke root, cari dist, serve dist sebagai aset static
+
+    // kalo ada request get ke route selain di notesRoutes, kasih index.html punya FE :
+    app.get("*", (req, res) => {
+        res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"))
+    })
+}
 
 connectDB().then(()=> {
     app.listen(5001, () => {
